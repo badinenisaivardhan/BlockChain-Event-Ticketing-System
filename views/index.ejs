@@ -1,0 +1,118 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Ticketing Platform</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #3498db, #9b59b6);
+            color: #fff;
+        }
+
+        .container {
+            text-align: center;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: #fff;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .connect-wallet-button {
+            background-color: #2ecc71;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            padding: 15px 30px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .connect-wallet-button:hover {
+            background-color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+            <img src="/metamask.png" style="width: 150px; /* Set your desired width */
+            height: 150px; /* Set your desired height */
+            border-radius: 50%; /* Create a circular shape */
+            overflow: hidden;">
+        <h1>Event Ticketing Platform</h1>
+        <p>Your seamless ticketing experience starts here. Powered By Metamask.io</p>
+        <button class="connect-wallet-button" id="myButton" onclick="ConnectToWallet()">Connect Wallet</button>
+    </div>
+
+    <form id="LoginForm" action="/login"  method="post" style="display: none;">
+        <label for="userAddress">userAddress:</label>
+        <input type="text" id="userAddress" name="userAddress">
+        <label for="signature">signature:</label>
+        <input type="text" id="signature" name="signature">
+        <label for="message">message:</label>
+        <input type="text" id="message" name="message">
+        <button type="submit">Login</button>
+    </form>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.6.0/dist/web3.min.js"></script>
+    <script>
+        async function ConnectToWallet() {
+            let form = document.getElementById("LoginForm");
+            let userAddressFeild = document.getElementById("userAddress");
+            let signatureFeild = document.getElementById("signature");
+            let messageFeild = document.getElementById("message");
+            const message = 'Hello, Web3.js!';
+            let signature
+            let userAddress
+            if (typeof window.ethereum !== 'undefined') {
+                window.web3 = new Web3(window.ethereum);
+                try {
+                    //Check For Already Signed Acocunts
+                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                    if (accounts.length > 0) {
+                        userAddress = accounts[0];
+                        console.log('Already connected. User Address:', userAddress);
+                        signature  = await window.web3.eth.personal.sign(message, userAddress);
+                        
+                    }else{
+                        console.log('New Connection ');
+                        await window.ethereum.request({ method: 'eth_requestAccounts' });
+                        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                        userAddress = accounts[0];
+                        signature = await window.web3.eth.personal.sign(message, userAddress);
+                    }
+                    userAddressFeild.value = userAddress
+                    signatureFeild.value = signature
+                    messageFeild.value = message
+                    form.submit();
+
+                } catch (error) {
+                    alert('Metamask: Could Not Connect To Your Account, Please Try Again..!');
+                }
+            } else {
+                console.error('MetaMask not detected!');
+            }
+        }
+
+    </script>
+    </body>
+    </html>
+
+
+   

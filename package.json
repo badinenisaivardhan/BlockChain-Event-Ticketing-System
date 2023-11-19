@@ -1,0 +1,26 @@
+{
+  "name": "ether-project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "ejs": "^3.1.9",
+    "ethereumjs-util": "^7.1.5",
+    "ethers": "^5.7.2",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "hardhat": "^2.19.1",
+    "jsonwebtoken": "^9.0.2",
+    "web3": "^4.2.2"
+  }
+}

@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orgraniser Dashboard - Event Ticketing Platform</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #fff; /* White Background Color */
+            color: #333;
+        }
+
+        header {
+             background: linear-gradient(135deg, #3498db, #9b59b6); /* Blue Header Color */
+            padding: 10px;
+            text-align: center;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #fff;
+            display: inline-block;
+            margin-right: 10px;
+            overflow: hidden;
+        }
+
+        .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        nav {
+            background-color: #2c3e50; /* Dark Gray Navbar Color */
+            padding: 10px;
+        }
+
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            margin-right: 20px;
+            font-weight: bold;
+        }
+
+        nav a.current {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        .event-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            padding: 20px;
+            background-color: #ecf0f1; /* Light Gray Event Card Background */
+        }
+
+        .user-details {
+            display: flex;
+            align-items: center;
+            color: #fff;
+        }
+
+        .logout-button {
+            background-color: #e74c3c; /* Red Logout Button Color */
+            color: #fff;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        a.button {
+            display: inline-block;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+            color: #333;
+            margin: 5px;
+        }
+
+        /* Hover effect */
+        a.button:hover {
+            background-color: #ddd;
+        }
+
+        
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="user-details">
+		<img src="/metamask.png" style="width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        overflow: hidden;">
+        <h1>Event Ticketing Platform</h1>
+    </div>
+    <div>
+	<span id="userAddress" style="display:none;"><%= userAddress %></span>
+	<span id="username">Welcome..! : <%= userAddress %></span>
+    <button class="logout-button" onclick="location.href='/logout'" type="button" >Logout</button>
+    </div>
+</header>
+
+<nav>
+    <a href="/dashboard" >All Events</a>
+	<a href="/dashboard/newevent">Add New Event</a>
+    <a href="/dashboard/myevents" class="current">My Events</a>
+    <!-- Add more menu items as needed -->
+</nav>
+
+<div class="content" >
+	<div class="content" id="alleventlist" >
+        
+	</div>
+	
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/web3@1.6.0/dist/web3.min.js"></script>
+<script> 
+        const connectContract = async () => {
+		const ABI = [
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "organiserAddress",
+				"type": "address"
+			}
+		],
+		"name": "addOrganiser",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "eventId",
+				"type": "uint256"
+			}
+		],
+		"name": "cancelEvent",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "eventId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "_ticketHolder",
+				"type": "address"
+			}
+		],
+		"name": "cancelTicket",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "eventId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "eventName",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "eventTicketPrice",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "eventTotalTickets",
+				"type": "uint256"
+			}
+		],
+		"name": "createEvent",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "eventId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "newName",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "newTicketPrice",
+				"type": "uint256"
+			}
+		],
+		"name": "editEvent",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "eventId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "ticketQuantity",
+				"type": "uint256"
+			}
+		],
+		"name": "purchaseTicket",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "eventId",
+				"type": "uint256"
+			}
+		],
+		"name": "EventCancelled",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "eventId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "eventName",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "organiser",
+				"type": "address"
+			}
+		],
+		"name": "EventCreated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "eventId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "newName",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "newTicketPrice",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "enum WorkingContract.EventStatus",
+				"name": "newStatus",
+				"type": "uint8"
+			}
+		],
+		"name": "EventUpdated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "eventId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "eventowner",
+				"type": "address"
+			}
+		],
+		"name": "NothingForWithdrawl",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "eventId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "buyer",
+				"type": "address"
+			}
+		],
+		"name": "RefundAlreadyCompleted",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "eventId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "buyer",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "refundAmount",
+				"type": "uint256"
+			}
+		],
+		"name": "RefundProcessed",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "eventId",
+				"type": "uint256"
+			}
+		],
+		"name": "startSellingTickets",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "eventId",
+				"type": "uint256"
+			}
+		],
+		"name": "stopSellingTickets",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "eventId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "buyer",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "ticketQuantity",
+				"type": "uint256"
+			}
+		],
+		"name": "TicketPurchased",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "eventId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "eventowner",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "withdrawable_amount",
+				"type": "uint256"
+			}
+		],
+		"name": "WithdrawComplete",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "eventId",
+				"type": "uint256"
+			}
+		],
+		"name": "withdrawEventTicketMoney",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "events",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "eventId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "eventName",
+				"type": "string"
+			},
+			{
+				"internalType": "address",
+				"name": "eventOrganiser",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "eventTicketPrice",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "eventTotalTickets",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "eventAvailableTickets",
+				"type": "uint256"
+			},
+			{
+				"internalType": "enum WorkingContract.EventStatus",
+				"name": "status",
+				"type": "uint8"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getLatestEventId",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_ticketHolder",
+				"type": "address"
+			}
+		],
+		"name": "getMyEventList",
+		"outputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "",
+				"type": "uint256[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "eventId",
+				"type": "uint256"
+			}
+		],
+		"name": "getTicketHolder",
+		"outputs": [
+			{
+				"components": [
+					{
+						"internalType": "address",
+						"name": "ticketBuyer",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "purchasedTickets",
+						"type": "uint256"
+					}
+				],
+				"internalType": "struct WorkingContract.TicketHolder[]",
+				"name": "",
+				"type": "tuple[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "eventId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "_address",
+				"type": "address"
+			}
+		],
+		"name": "getTicketQuantity",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_address",
+				"type": "address"
+			}
+		],
+		"name": "isAdmin",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_address",
+				"type": "address"
+			}
+		],
+		"name": "isEventOrgraniser",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "listAllEventId",
+		"outputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "",
+				"type": "uint256[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]
+		const Address = "0x7832ed60DC54C7efe5aE43891c61d20B5c8C400B";
+        window.web3 = await new Web3(window.ethereum);
+        window.contract = await new window.web3.eth.Contract(ABI, Address);
+        const accounts = await web3.eth.getAccounts();
+        const account = accounts[0];
+        return {
+            contract:window.contract,
+            account:account,
+            contractAddress:Address,
+            window:window.web3
+        }
+    }
+
+     
+	 const SaleStatusFormatter = (id) =>{
+		if (parseInt(id)==0){
+			return "NotStarted"
+		}else if(parseInt(id)==1){
+			return "Started" 
+		}else if(parseInt(id)==2){
+			return "Cancelled"
+		}else {
+			return "Unkown"
+		}
+	 }
+
+
+	 const getMyEventList = async (userAddress) => {
+		try {
+			const response = await fetch('/getMyEventList', {
+				method: 'POST',
+				headers:{'Content-Type': 'application/json'},
+				body:JSON.stringify({
+					userAddress:userAddress
+				})
+			});
+            
+			const data = await response.json();
+			return data["data"];
+		} catch (err) {
+			console.log(`Error: ${err}`);
+			throw err; 
+		}
+	};
+
+	const eventDetails=async(eventId)=>{
+		try {
+			const response = await fetch('/eventDetails', {
+				method: 'POST',
+				headers:{'Content-Type': 'application/json'},
+				body:JSON.stringify({
+					eventId:eventId
+				})
+			});
+			const data = await response.json();
+			return data["data"];
+		} catch (err) {
+			console.log(`Error: ${err}`);
+			throw err; 
+		}
+	}
+
+
+    
+	const getTicketQuantity=async(eventId,address)=>{
+		try {
+			const response = await fetch('/getTicketQuantity', {
+				method: 'POST',
+				headers:{'Content-Type': 'application/json'},
+				body:JSON.stringify({
+					eventId:eventId,
+                    userAddress:address
+				})
+			});
+			const data = await response.json();
+			return data["data"];
+		} catch (err) {
+			console.log(`Error: ${err}`);
+			throw err; 
+		}
+	}
+
+
+	const GetAllEvents = async () => {
+        const {account} = await connectContract();
+		try {
+			let eventsId = await getMyEventList(account);
+			if (eventsId.length>0) {
+				const alleventlist = document.getElementById('alleventlist');
+                eventsId = eventsId.sort();
+				eventsId.forEach(async singleEventId => {
+                    let purchasedQty = await getTicketQuantity(singleEventId,account)
+					let eventDetailsData = await eventDetails(singleEventId)
+					const eventCard = document.createElement('div');
+					eventCard.className = 'event-card';
+                    if (purchasedQty>0){
+                        eventCard.innerHTML = `
+						<h2>${eventDetailsData[1]}</h2>
+						<p>Event ID : ${eventDetailsData[0]}</p>
+						<p>Event Orgraniser :  ${eventDetailsData[2]}</p>
+						<p>Event Ticket Price : ${eventDetailsData[3]} Wei</p>
+						<p>Purchased Tickets : ${purchasedQty}</p>
+					`;
+                    }else if (purchasedQty==0){
+                        eventCard.innerHTML = `
+						<h2>${eventDetailsData[1]}</h2>
+						<p>Event ID : ${eventDetailsData[0]}</p>
+						<p>Event Orgraniser :  ${eventDetailsData[2]}</p>
+						<p>Event Ticket Price : ${eventDetailsData[3]} Wei</p>
+						<p>Refund : Complete</p>
+					`;
+                    }
+					// Append the new event card to the content div
+					alleventlist.appendChild(eventCard);
+				});
+			}else{
+				const eventCard = document.createElement('div');
+				eventCard.className = 'event-card';
+				eventCard.innerHTML = `<h2>No Event Found</h2>`
+				alleventlist.appendChild(eventCard);
+			}
+		} catch (error) {
+			console.error('Error in GetAllEvents:', error);
+		}
+	};
+
+
+
+    const StartTicketSale = async(eventId) =>{
+        try {
+        const {window,contract,account,contractAddress} = await connectContract();
+        //Gas Estimate
+        const gasEstimate = await contract.methods.startSellingTickets(
+                eventId
+            ).estimateGas({ from: account });
+
+        // Estimate gas price
+        const gasPrice = await window.eth.getGasPrice();
+        const transactionData = contract.methods.startSellingTickets(
+            eventId
+        ).encodeABI();
+
+        // Transaction object
+        const transactionObject = {
+            from: account,
+            to: contractAddress,
+            gas: gasEstimate,
+            gasEstimate: gasPrice,
+            data: transactionData,
+        };
+        // Send the transaction
+        const result = await window.eth.sendTransaction(transactionObject);
+            alert(`EventID: ${eventId} Started Selling Tickets ..! 
+Transaction Hash : ${result.transactionHash}`)
+        } catch (error) {
+            alert(`Metamask Error : ${error["message"]}`)
+        }
+    }
+
+
+    const StopTicketSale = async(eventId) =>{
+        try {
+        const {window,contract,account,contractAddress} = await connectContract();
+        //Gas Estimate
+        const gasEstimate = await contract.methods.stopSellingTickets(
+                eventId
+            ).estimateGas({ from: account });
+
+        // Estimate gas price
+        const gasPrice = await window.eth.getGasPrice();
+        const transactionData = contract.methods.stopSellingTickets(
+            eventId
+        ).encodeABI();
+
+        // Transaction object
+        const transactionObject = {
+            from: account,
+            to: contractAddress,
+            gas: gasEstimate,
+            gasEstimate: gasPrice,
+            data: transactionData,
+        };
+        // Send the transaction
+        const result = await window.eth.sendTransaction(transactionObject);
+            alert(`EventID: ${eventId} Status Paused And Reverted To Not Started State Sucessfully ..! 
+Transaction Hash : ${result.transactionHash}`)
+        } catch (error) {
+            alert(`Metamask Error : ${error["message"]}`)
+        }
+    }
+
+    window.onload = GetAllEvents ;
+    
+</script>
+</body>
+</html>
